@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "sourceRoots": ["src/", "server/", "scripts/", "docs/", ".github/workflows/"],
+  "sourceFiles": [
+    "AGENTS.md",
+    "README.md",
+    "package.json",
+    "pnpm-workspace.yaml",
+    "vite.config.js",
+    "capacitor.config.ts",
+    "tailwind.config.js",
+    "postcss.config.js",
+    "index.html"
+  ],
+  "extensions": [".md", ".js", ".jsx", ".mjs", ".ts", ".tsx", ".css", ".json", ".yaml", ".yml", ".html"],
+  "maxFileBytes": 262144,
+  "maxTotalBytes": 8388608,
+  "chunkLines": 24,
+  "overlapLines": 4
+}

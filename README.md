@@ -19,7 +19,7 @@ The app currently supports:
 
 - local React/Vite web app
 - local persistence in browser storage
-- secure local Anthropic proxy
+- development-only Anthropic proxy (shared-service security work remains)
 - course creation and editing
 - course import from a university course-outline link
 - course-outline PDF upload/import
@@ -42,7 +42,7 @@ The app currently supports:
 
 ## Run Locally
 
-Create `.env`:
+Use Node from `.node-version` and the exact pnpm version in `package.json` (`pnpm@10.34.9`). Install with `pnpm install --frozen-lockfile`. Copy `.env.example` to an ignored `.env` and supply a new provider credential locally:
 
 ```bash
 ANTHROPIC_API_KEY=your_real_anthropic_api_key
@@ -51,7 +51,7 @@ ANTHROPIC_API_KEY=your_real_anthropic_api_key
 Start the web app:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open:
@@ -63,9 +63,16 @@ http://127.0.0.1:5173/
 ## Quality Checks
 
 ```bash
-npm test
-npm run build
+pnpm check:secrets
+pnpm lint
+pnpm test
+pnpm test:tooling
+pnpm build
 ```
+
+CI runs these checks on pull requests and `main`. The release workflow creates a static web archive with checksums after rerunning the checks. Hosting is undecided; no deployment runs. The built frontend does not include the development AI/import API. Passing CI does not mean all product workflows are correct or the app is ready for production.
+
+For coordinated agent work, start with [AGENTS.md](AGENTS.md), the [architecture](docs/engineering/architecture.md), and the [agent workflow and local retrieval commands](docs/engineering/agent-workflow.md). Track remaining defects in the [remediation plan](docs/engineering/remediation-plan.md). See [security](docs/engineering/security.md) for credential response and [release artifacts](docs/engineering/releases.md) for packaging and deployment prerequisites.
 
 ## Roadmap
 

@@ -1,2 +1,7 @@
+packages:
+  - .
+
+# Review dependency lifecycle scripts before permitting execution.
+strictDepBuilds: true
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true

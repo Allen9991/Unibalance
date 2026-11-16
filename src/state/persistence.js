@@ -4,31 +4,6 @@ export const STORAGE_KEY = "unibalance.reducerState.v1";
 export const BACKUP_KEY_PREFIX = "unibalance.reducerState.backup";
 export const SCHEMA_VERSION = 3;
 
-const DEMO_COURSE_CODES = new Set(["COSC121", "MATH103", "ENGL101", "STAT101"]);
-const DEMO_COMMITMENT_IDS = new Set([
-  "gym-mon",
-  "cosc-mon",
-  "math-mon",
-  "stat-mon",
-  "engl-tue",
-  "math-tue",
-  "work-tue",
-  "gym-wed",
-  "cosc-wed",
-  "math-wed",
-  "engl-wed",
-  "stat-thu",
-  "cosc-thu",
-  "work-thu",
-  "gym-fri",
-  "math-fri",
-  "stat-fri",
-  "engl-fri",
-  "work-sat",
-  "social-sat",
-  "reset-sun",
-]);
-
 export function hydrateAppState(storage = safeLocalStorage()) {
   const seed = createInitialAppState();
   if (!storage) return seed;
@@ -62,7 +37,7 @@ export async function hydrateAppStateAsync(storage) {
 export function saveAppState(state, storage = safeLocalStorage()) {
   if (!storage) return false;
   try {
-    storage.setItem(STORAGE_KEY, JSON.stringify({ version: SCHEMA_VERSION, savedAt: new Date().toISOString(), state: migrateAppState(state, createInitialAppState(), SCHEMA_VERSION) }));
+    storage.setItem(STORAGE_KEY, JSON.stringify({ version: SCHEMA_VERSION, savedAt: new Date().toISOString(), state: normalizeAppState(state) }));
     return true;
   } catch (error) {
     return false;
@@ -74,7 +49,7 @@ export async function saveAppStateAsync(state, storage) {
   if (!targetStorage) return saveAppState(state);
 
   try {
-    await targetStorage.setItem(STORAGE_KEY, JSON.stringify({ version: SCHEMA_VERSION, savedAt: new Date().toISOString(), state: migrateAppState(state, createInitialAppState(), SCHEMA_VERSION) }));
+    await targetStorage.setItem(STORAGE_KEY, JSON.stringify({ version: SCHEMA_VERSION, savedAt: new Date().toISOString(), state: normalizeAppState(state) }));
     return true;
   } catch (error) {
     return false;
@@ -134,7 +109,9 @@ const migrations = {
     };
   },
   2(candidate, seed) {
-    return removePrototypeDemoData(normalizeAppState(candidate, seed), seed);
+    // Legacy records have no reliable demo provenance. Real course codes and
+    // commitment IDs must not be used to infer that student data is disposable.
+    return normalizeAppState(candidate, seed);
   },
 };
 
@@ -185,35 +162,6 @@ function validArray(value) {
 
 function validObject(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function removePrototypeDemoData(candidate, seed) {
-  const courses = candidate.courses.filter((course) => !DEMO_COURSE_CODES.has(course.code));
-  const removedAssessmentIds = new Set(
-    candidate.assessments
-      .filter((assessment) => DEMO_COURSE_CODES.has(assessment.course))
-      .map((assessment) => assessment.id),
-  );
-
-  return {
-    ...candidate,
-    courses,
-    assessments: candidate.assessments.filter((assessment) => !DEMO_COURSE_CODES.has(assessment.course)),
-    commitments: candidate.commitments.filter((commitment) => (
-      !DEMO_COMMITMENT_IDS.has(commitment.id) && !DEMO_COURSE_CODES.has(commitment.course)
-    )),
-    studySessions: candidate.studySessions.filter((session) => (
-      !DEMO_COURSE_CODES.has(session.course) && !removedAssessmentIds.has(session.assessmentId)
-    )),
-    taskHistory: Object.fromEntries(
-      Object.entries(candidate.taskHistory).filter(([assessmentId, history]) => (
-        !removedAssessmentIds.has(Number(assessmentId)) && !removedAssessmentIds.has(history?.assessmentId)
-      )),
-    ),
-    view: candidate.view || seed.view,
-    timerTarget: removedAssessmentIds.has(candidate.timerTarget?.assessmentId) ? null : candidate.timerTarget,
-    recentChange: null,
-  };
 }
 
 function safeLocalStorage() {
